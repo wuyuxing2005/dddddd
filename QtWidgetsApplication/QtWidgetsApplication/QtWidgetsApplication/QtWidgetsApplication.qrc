@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/QtWidgetsApplication">
+        <file>MainView.qml</file>
+        <file>Dobot_Robotic_Arm_digital_twin.qml</file>
+        <file>meshes/obj1_003_mesh.mesh</file>
+        <file>meshes/obj1_004_mesh.mesh</file>
+        <file>meshes/obj2_002_mesh.mesh</file>
+        <file>meshes/obj3_004_mesh.mesh</file>
+        <file>meshes/obj3_005_mesh.mesh</file>
+        <file>meshes/obj3_006_mesh.mesh</file>
+        <file>meshes/obj4_003_mesh.mesh</file>
+        <file>VideoView.qml</file>
+        <file>no_signal.jpg</file>
+    </qresource>
+</RCC>

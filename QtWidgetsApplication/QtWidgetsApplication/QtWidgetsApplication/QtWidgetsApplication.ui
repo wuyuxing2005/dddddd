@@ -1,0 +1,1297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QtWidgetsApplicationClass</class>
+ <widget class="QWidget" name="QtWidgetsApplicationClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1920</width>
+    <height>1080</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>QtWidgetsApplication</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">/* =========================================
+   1. 浩瀚底色：沉浸式钛钢灰背景 (对齐中转站)
+   ========================================= */
+QMainWindow, QWidget#QtWidgetsApplicationClass {
+    background-color: #2B3140; /* NordSlate 底色 */
+}
+
+/* =========================================
+   2. 卡片 (GroupBox) - 学术克制与绝对加粗紧凑
+   ========================================= */
+QGroupBox {
+    background-color: #363E53; 
+    border: 1px solid #454E65; 
+    border-radius: 12px;
+    margin-top: 25px; 
+    font-family: &quot;Segoe UI Variable&quot;, &quot;Segoe UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center; 
+    padding: 0px 12px;               
+    background-color: transparent; 
+    color: #FFFFFF;
+    font: bold 13pt &quot;Segoe UI Variable&quot;, &quot;Segoe UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif;
+    letter-spacing: 1px; 
+}
+
+/* =========================================
+   3. 全局字体层级与基础排版
+   ========================================= */
+QLabel, QCheckBox, QRadioButton {
+    background-color: transparent; 
+    color: #E2E8F0;
+    font-family: &quot;Segoe UI Variable&quot;, &quot;Segoe UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif;
+    font-weight: 500;
+    font-size: 11pt; 
+}
+
+/* =========================================
+   4. 深邃输入/日志框 (统一为图表最深底色 #1B212D) 
+   ========================================= */
+QLineEdit, QPlainTextEdit {
+    background-color: #1B212D; 
+    color: #E2E8F0;
+    border: 1px solid #454E65;
+    border-radius: 6px;
+    font-family: &quot;Consolas&quot;, monospace;
+    padding: 6px 10px;
+    outline: none; 
+}
+QPlainTextEdit QWidget { background-color: #1B212D; }
+QLineEdit { font-size: 11pt; }
+QPlainTextEdit { font-size: 9pt; }
+
+/* 默认 Focus 防错 */
+QLineEdit:focus, QPlainTextEdit:focus { 
+    border: 1px solid #00D2FF; 
+    background-color: #161A23;
+}
+
+/* =========================================
+   ★ 5. 核心魔法：精准名称绑定的色彩继承体系 ★
+   ========================================= */
+
+/* --- 模块 A：3D Touch 家族 (科技蓝 #00D2FF) --- */
+QGroupBox#groupBox_TouchConfiguration, 
+QGroupBox#groupBox_Touch3D, 
+QGroupBox#groupBox_TouchLog { 
+    border-top: 3px solid #00D2FF; 
+}
+QGroupBox#groupBox_TouchConfiguration QLineEdit, 
+QGroupBox#groupBox_Touch3D QLineEdit, 
+QGroupBox#groupBox_TouchLog QPlainTextEdit { 
+    color: #00D2FF; 
+}
+QGroupBox#groupBox_TouchConfiguration QLineEdit:focus, 
+QGroupBox#groupBox_Touch3D QLineEdit:focus, 
+QGroupBox#groupBox_TouchLog QPlainTextEdit:focus { 
+    border: 1px solid #00D2FF; 
+    background-color: #161A23; 
+}
+QGroupBox#groupBox_TouchConfiguration QRadioButton::indicator:checked {
+    background-color: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 #00D2FF, stop:0.5 #00D2FF, stop:0.55 transparent, stop:1 transparent);
+}
+
+/* --- 模块 B：Dobot 控制 (警示黄 #FFD166) --- */
+QGroupBox#groupBox_ControlConfiguration { 
+    border-top: 3px solid #FFD166; 
+}
+QGroupBox#groupBox_ControlConfiguration QLineEdit { 
+    color: #FFD166; 
+}
+QGroupBox#groupBox_ControlConfiguration QLineEdit:focus { 
+    border: 1px solid #FFD166; 
+    background-color: #161A23; 
+}
+QGroupBox#groupBox_ControlConfiguration QRadioButton::indicator:checked {
+    background-color: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 #FFD166, stop:0.5 #FFD166, stop:0.55 transparent, stop:1 transparent);
+}
+
+/* --- 模块 C：机械爪 Claw (猛男粉 #F15BB5) --- */
+QGroupBox#groupBox_Claw { border-top: 3px solid #F15BB5; }
+QGroupBox#groupBox_Claw QLineEdit { color: #F15BB5; }
+QGroupBox#groupBox_Claw QLineEdit:focus { 
+    border: 1px solid #F15BB5; background-color: #161A23; 
+}
+
+/* --- 模块 D：压力传感器 Pressure (丁香紫 #9D4EDD) --- */
+QGroupBox#groupBox_Pressure { border-top: 3px solid #9D4EDD; }
+QGroupBox#groupBox_Pressure QLineEdit { color: #9D4EDD; }
+QGroupBox#groupBox_Pressure QLineEdit:focus { 
+    border: 1px solid #9D4EDD; background-color: #161A23; 
+}
+
+/* --- 模块 E：视觉监控 Camera (薄荷绿 #00FFCC) --- */
+QGroupBox#groupBox_Camera { border-top: 3px solid #00FFCC; }
+QGroupBox#groupBox_Camera QLineEdit { color: #00FFCC; }
+QGroupBox#groupBox_Camera QLineEdit:focus { 
+    border: 1px solid #00FFCC; background-color: #161A23; 
+}
+/* 专属摄像头黑屏监视器 */
+QLabel#label_camera_feed {
+    background-color: #1B212D; border: 1px solid #454E65; border-radius: 6px;
+    color: #00FFCC; font-family: &quot;Consolas&quot;; font-size: 16pt; font-weight: bold; letter-spacing: 4px;
+}
+
+/* --- 🚀 模块 F：系统日志 System Log (单独拎出来的科技蓝 #00D2FF) --- */
+QGroupBox#groupBox_SystemLog { border-top: 3px solid #00D2FF; }
+QGroupBox#groupBox_SystemLog QPlainTextEdit { color: #00D2FF; }
+QGroupBox#groupBox_SystemLog QPlainTextEdit:focus { 
+    border: 1px solid #00D2FF; background-color: #161A23; 
+}
+
+/* =========================================
+   6. 单选框指示器 (完美正圆修复)
+   ========================================= */
+QRadioButton::indicator {
+    width: 14px; height: 14px;
+    border-radius: 9px; 
+    border: 2px solid #FFFFFF; 
+    background-color: transparent;
+}
+QRadioButton::indicator:hover { background-color: rgba(255, 255, 255, 0.1); }
+QRadioButton::indicator:checked { border: 2px solid #FFFFFF; } 
+
+/* =========================================
+   7. 按钮：还原红蓝色彩 &amp; 学术放大
+   ========================================= */
+QPushButton {
+    background-color: #47526A; color: #FFFFFF;
+    border: 1px solid #5A6782; border-top: 1px solid #6B7996; 
+    border-radius: 6px; padding: 8px 24px; font-weight: bold; font-size: 11pt; 
+}
+QPushButton:hover { background-color: #55627D; }
+QPushButton:pressed { background-color: #3A4459; color: #A0A0A0; }
+
+QPushButton#pushButton_start, QPushButton#pushButton_camera_start { background-color: #0078D4; border: none; font-size: 13pt; }
+QPushButton#pushButton_start:hover, QPushButton#pushButton_camera_start:hover { background-color: #2B88D8; }
+
+QPushButton#pushButton_start_2, QPushButton#pushButton_camera_stop { background-color: #C42B1C; border: none; font-size: 13pt; }
+QPushButton#pushButton_start_2:hover, QPushButton#pushButton_camera_stop:hover { background-color: #D13438; }
+
+/* =========================================
+   8. 隐形科技感滚动条 
+   ========================================= */
+QScrollBar:vertical {
+    background: #1B212D; width: 10px; margin: 0px; border-radius: 5px;
+}
+QScrollBar::handle:vertical { background: #454E65; min-height: 20px; border-radius: 5px; }
+QScrollBar::handle:vertical:hover { background: #5A6782; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }
+
+/* =========================================
+   9. Touch 端专属：指示灯与滑块适配
+   ========================================= */
+QLabel#led_touch_status, QLabel#led_dobot, QLabel#led_zhuazi, QLabel#led_pressure, QLabel#led_camera {
+    width: 14px; height: 14px;
+    border-radius: 9px; 
+    border: 2px solid #454E65; 
+    background-color: transparent;
+    min-width: 14px; max-width: 14px; min-height: 14px; max-height: 14px;
+}
+
+QSlider::groove:horizontal {
+    border: 1px solid #454E65; height: 6px; background: #1B212D; border-radius: 3px;
+}
+QSlider::sub-page:horizontal { background: #00FFCC; border-radius: 3px; }
+QSlider::handle:horizontal {
+    background: #FFFFFF; border: 2px solid #00FFCC;
+    width: 14px; margin-top: -5px; margin-bottom: -5px; border-radius: 7px;
+}
+QSlider::handle:horizontal:hover { background: #E2E8F0; }</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
+     </property>
+     <widget class="QWidget" name="widget_touch_domain" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>500</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>960</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <widget class="QGroupBox" name="groupBox_TouchConfiguration">
+       <property name="geometry">
+        <rect>
+         <x>9</x>
+         <y>9</y>
+         <width>941</width>
+         <height>131</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI Variable</family>
+         <pointsize>13</pointsize>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="title">
+        <string>3D Touch Configuration</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="minimumSize">
+             <size>
+              <width>40</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>45</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Segoe UI Variable</family>
+              <pointsize>11</pointsize>
+              <fontweight>Medium</fontweight>
+             </font>
+            </property>
+            <property name="text">
+             <string>Status</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_5">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>150</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Consolas</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>moving</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_5">
+            <property name="font">
+             <font>
+              <family>Segoe UI Variable</family>
+              <pointsize>11</pointsize>
+              <fontweight>Medium</fontweight>
+             </font>
+            </property>
+            <property name="text">
+             <string>Connection</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="led_touch_status">
+            <property name="minimumSize">
+             <size>
+              <width>18</width>
+              <height>18</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>18</width>
+              <height>18</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>450</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QLabel" name="label_x">
+            <property name="font">
+             <font>
+              <family>Segoe UI Variable</family>
+              <pointsize>11</pointsize>
+              <fontweight>Medium</fontweight>
+             </font>
+            </property>
+            <property name="text">
+             <string>X : </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_2">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Consolas</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>mm</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_y">
+            <property name="font">
+             <font>
+              <family>Segoe UI Variable</family>
+              <pointsize>11</pointsize>
+              <fontweight>Medium</fontweight>
+             </font>
+            </property>
+            <property name="text">
+             <string>Y : </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_3">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Consolas</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>mm</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_z">
+            <property name="font">
+             <font>
+              <family>Segoe UI Variable</family>
+              <pointsize>11</pointsize>
+              <fontweight>Medium</fontweight>
+             </font>
+            </property>
+            <property name="text">
+             <string>Z : </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_4">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Consolas</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>mm</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_Touch3D">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>153</y>
+         <width>941</width>
+         <height>641</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI Variable</family>
+         <pointsize>13</pointsize>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="title">
+        <string>3D Coordinate System Display</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_8">
+        <item>
+         <widget class="TouchOpenGLWidget" name="opengl_touch_window">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>550</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_TouchLog">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>800</y>
+         <width>941</width>
+         <height>211</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI Variable</family>
+         <pointsize>13</pointsize>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="title">
+        <string>3D Touch log</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QPlainTextEdit" name="txt_touch_log">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="widget_robot_domain" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>960</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <widget class="QGroupBox" name="groupBox_ControlConfiguration">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>391</width>
+         <height>571</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI Variable</family>
+         <pointsize>13</pointsize>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="title">
+        <string>Robot and Relay Configuration</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+       <widget class="QWidget" name="widget_6" native="true">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>37</y>
+          <width>371</width>
+          <height>145</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>250</width>
+          <height>145</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>175244</width>
+          <height>145</height>
+         </size>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QLabel" name="label_4">
+             <property name="maximumSize">
+              <size>
+               <width>65</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Segoe UI Variable</family>
+               <pointsize>11</pointsize>
+               <fontweight>Medium</fontweight>
+              </font>
+             </property>
+             <property name="text">
+              <string>Relay IP</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="lineEdit">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>150</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>192.168.100.194</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_15">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Connection</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="led_dobot">
+             <property name="minimumSize">
+              <size>
+               <width>18</width>
+               <height>18</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>18</width>
+               <height>18</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_14">
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Robot Status</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="lineEdit_7">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>125</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_16">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <item>
+            <widget class="QLabel" name="label_12">
+             <property name="text">
+              <string>Control Method : </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_9">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Policy::Expanding</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_Hold">
+             <property name="text">
+              <string>Hold</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_13">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_Click">
+             <property name="text">
+              <string>Click to switch</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QGroupBox" name="groupBox_Twin">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>178</y>
+          <width>391</width>
+          <height>391</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Segoe UI Variable</family>
+          <pointsize>11</pointsize>
+         </font>
+        </property>
+        <property name="title">
+         <string>Robot Digital Twin</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_TwinBox"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_SystemLog">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>590</y>
+         <width>911</width>
+         <height>421</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI Variable</family>
+         <pointsize>13</pointsize>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="title">
+        <string>System log</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QWidget" name="widget" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>60</height>
+           </size>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_4"/>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="txt_robot_log">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <item>
+           <spacer name="horizontalSpacer_11">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>37</width>
+              <height>17</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_start">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>40</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Start</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_10">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>37</width>
+              <height>17</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_start_2">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>40</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Stop</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_12">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>37</width>
+              <height>17</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_Camera">
+       <property name="geometry">
+        <rect>
+         <x>410</x>
+         <y>190</y>
+         <width>511</width>
+         <height>391</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI Variable</family>
+         <pointsize>13</pointsize>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="title">
+        <string>Camera</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_video"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_Claw">
+       <property name="geometry">
+        <rect>
+         <x>410</x>
+         <y>10</y>
+         <width>511</width>
+         <height>83</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI Variable</family>
+         <pointsize>13</pointsize>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="title">
+        <string>Claw</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_12">
+        <item>
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <item>
+           <widget class="QLabel" name="label_13">
+            <property name="maximumSize">
+             <size>
+              <width>45</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>status</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="Claw_status">
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_14">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_Pressure">
+       <property name="geometry">
+        <rect>
+         <x>410</x>
+         <y>100</y>
+         <width>511</width>
+         <height>83</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Segoe UI Variable</family>
+         <pointsize>13</pointsize>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="title">
+        <string>Pressure Sensor</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_25">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_16">
+          <item>
+           <widget class="QLabel" name="label_17">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>40</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>status</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="Pressure_sensor_status">
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_6">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_18">
+          <item>
+           <widget class="QLabel" name="label_19">
+            <property name="minimumSize">
+             <size>
+              <width>60</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>60</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Pressure </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="Pressure_number">
+            <property name="minimumSize">
+             <size>
+              <width>45</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>TouchOpenGLWidget</class>
+   <extends>QOpenGLWidget</extends>
+   <header>touchopenglwidget.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="QtWidgetsApplication.qrc"/>
+  <include location="QtWidgetsApplication.qrc"/>
+  <include location="C:/Users/ACN/.designer/backup/QtWidgetsApplication.qrc"/>
+ </resources>
+ <connections/>
+</ui>
