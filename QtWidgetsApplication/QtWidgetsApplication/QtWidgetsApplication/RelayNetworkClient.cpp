@@ -1,147 +1,17 @@
 #include "RelayNetworkClient.h"
+#include "PingReceiverTask.h"
+#include "RelaySenderThread.h"
 #include <QDateTime>
+#include <QHostAddress>
 #include <QThread>
 #include <QMutexLocker>
 #include <QByteArray>
 #include <cstring>
 #include <thread>
-#include <QNetworkProxy>
 
 // =========================================================
-// 🚀 独立测速线程任务类的实现
+// RelayNetworkClient implementation
 // =========================================================
-void PingReceiverTask::setupSockets() {
-    // 确保清理旧的遗留对象
-    stopSockets();
-
-    // 1. TCP 测速专线初始化 (禁用 Nagle)
-    m_pingTcpSocket = new QTcpSocket(this);
-    m_pingTcpSocket->setProxy(QNetworkProxy::NoProxy);
-    m_pingTcpSocket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
-
-    // 🚀 新增：当 TCP 连接被中转站主动掐断时，立刻发出预警信号
-    connect(m_pingTcpSocket, &QTcpSocket::disconnected, this, [this]() {
-        emit networkDisconnected();
-        });
-
-    connect(m_pingTcpSocket, &QTcpSocket::readyRead, this, [this]() {
-        static QByteArray tcpPingBuffer;
-        tcpPingBuffer.append(m_pingTcpSocket->readAll());
-
-        if (tcpPingBuffer.size() > 8192) {
-            tcpPingBuffer.remove(0, tcpPingBuffer.size() - 8192);
-        }
-
-        int idx = tcpPingBuffer.lastIndexOf("PING|");
-        if (idx != -1) {
-            int endIdx = tcpPingBuffer.indexOf('|', idx + 5);
-            if (endIdx != -1) {
-                QByteArray pongData = tcpPingBuffer.mid(idx, endIdx - idx + 1);
-                memcpy(pongData.data(), "PONG", 4);
-                m_pingTcpSocket->write(pongData);
-                m_pingTcpSocket->flush();
-                tcpPingBuffer.clear();
-            }
-        }
-        });
-
-    // 2. UDP 测速专线初始化
-    m_pingUdpSocket = new QUdpSocket(this);
-    if (m_pingUdpSocket->state() != QAbstractSocket::BoundState) {
-        m_pingUdpSocket->bind(QHostAddress::Any, 0);
-    }
-
-    connect(m_pingUdpSocket, &QUdpSocket::readyRead, this, [this]() {
-        while (m_pingUdpSocket->hasPendingDatagrams()) {
-            QByteArray data;
-            data.resize(int(m_pingUdpSocket->pendingDatagramSize()));
-            QHostAddress senderIp;
-            quint16 senderPort;
-            m_pingUdpSocket->readDatagram(data.data(), data.size(), &senderIp, &senderPort);
-
-            int idx = data.lastIndexOf("PING|");
-            if (idx != -1) {
-                int endIdx = data.indexOf('|', idx + 5);
-                if (endIdx != -1) {
-                    QByteArray pongData = data.mid(idx, endIdx - idx + 1);
-                    memcpy(pongData.data(), "PONG", 4);
-                    m_pingUdpSocket->writeDatagram(pongData, senderIp, senderPort);
-                }
-            }
-        }
-        });
-
-    // 3. UDP 保活心跳定时器
-    m_pingUdpHeartbeatTimer = new QTimer(this);
-    connect(m_pingUdpHeartbeatTimer, &QTimer::timeout, this, [this]() {
-        if (m_pingUdpSocket) {
-            m_pingUdpSocket->writeDatagram("PING_HOLE_PUNCH", QHostAddress(ip), 8890);
-        }
-        });
-
-    // 4. 启动连接与定时器
-    m_pingTcpSocket->connectToHost(ip, 8890);
-    m_pingUdpHeartbeatTimer->start(2000);
-    m_pingUdpSocket->writeDatagram("PING_HOLE_PUNCH", QHostAddress(ip), 8890);
-}
-
-void PingReceiverTask::stopSockets() {
-    // 🚀 核心修复：彻底在正确的线程销毁对象，避免跨线程强拆引发的 Crash！
-    if (m_pingUdpHeartbeatTimer) {
-        m_pingUdpHeartbeatTimer->stop();
-        delete m_pingUdpHeartbeatTimer;
-        m_pingUdpHeartbeatTimer = nullptr;
-    }
-    if (m_pingTcpSocket) {
-        m_pingTcpSocket->abort(); // 立即掐断网络，不等待
-        delete m_pingTcpSocket;
-        m_pingTcpSocket = nullptr;
-    }
-    if (m_pingUdpSocket) {
-        m_pingUdpSocket->abort();
-        delete m_pingUdpSocket;
-        m_pingUdpSocket = nullptr;
-    }
-}
-
-
-// =========================================================
-// 主体网络类实现
-// =========================================================
-RelaySenderThread::RelaySenderThread(RelayNetworkClient* owner)
-    : m_owner(owner), m_running(true) {
-}
-
-void RelaySenderThread::stop() {
-    m_running = false;
-}
-
-void RelaySenderThread::run() {
-    const int IDLE_SLEEP_MS = 1;
-    m_owner->appendLog("[Sender Thread] Started successfully");
-
-    while (m_running) {
-        SendData data;
-        bool hasData = false;
-
-        {
-            QMutexLocker locker(&m_owner->queueMutex);
-            if (!m_owner->sendQueue.isEmpty()) {
-                data = m_owner->sendQueue.dequeue();
-                hasData = true;
-            }
-        }
-
-        if (hasData) {
-            m_owner->sendCoordinates(data.deltaX, data.deltaY, data.deltaZ);
-        }
-        else {
-            Sleep(IDLE_SLEEP_MS);
-        }
-    }
-    m_owner->appendLog("[Sender Thread] Exited");
-}
-
 RelayNetworkClient::RelayNetworkClient(QObject* parent)
     : QObject(parent) {
     WSADATA wsaData;
@@ -157,17 +27,17 @@ RelayNetworkClient::RelayNetworkClient(QObject* parent)
     m_twinHeartbeatTimer = new QTimer(this);
     connect(m_twinHeartbeatTimer, &QTimer::timeout, this, &RelayNetworkClient::sendTwinHeartbeat);
 
-    // 🚀 核心修复：在构造函数主线程中初始化线程结构，彻底解决点击Start卡死和连接慢的问题！
+    // Keep the ping worker thread alive so setup can be queued without blocking the UI.
     m_pingThread = new QThread(this);
     m_pingTask = new PingReceiverTask();
     m_pingTask->moveToThread(m_pingThread);
-    m_pingThread->start(); // 让它空载挂起，消耗为0
+    m_pingThread->start();
 }
 
 RelayNetworkClient::~RelayNetworkClient() {
     stopAll();
 
-    // 安全退出全局测速线程
+    // Stop ping sockets in their owner thread before shutting the thread down.
     if (m_pingThread) {
         QMetaObject::invokeMethod(m_pingTask, "stopSockets", Qt::BlockingQueuedConnection);
         m_pingThread->quit();
@@ -234,27 +104,26 @@ void RelayNetworkClient::connectToRelay(const QString& ip, int port) {
     isClosing = false;
 
     if (connectRelay()) {
-        // 🚀 核心修复：因为当前在 std::thread 中，绝不能在这里创建 QObject。
-        // 通过 BlockingQueuedConnection 抛回主线程安全创建，确保线程绑定正确无误！
+        // This runs from std::thread, so QObject work is bounced back to the Qt thread.
         QMetaObject::invokeMethod(this, [this, ip, port]() {
             isTcpConnected = true;
             clientRunning = true;
             emit connectionStatusChanged(true);
             appendLog(QString("[Network] Successfully connected to Relay Station %1:%2").arg(ip).arg(port));
 
-            // 安全命令已在运行的测速线程干活
+            // Configure the already running ping task through its event loop.
             m_pingTask->ip = ip;
             QMetaObject::invokeMethod(m_pingTask, "setupSockets", Qt::QueuedConnection);
 
-            // 🚀 新增：一旦侦察兵报告中转站断开，立刻触发 Touch 端的全面清理机制！
+            // If the relay closes the ping channel, stop all client-side networking.
             connect(m_pingTask, &PingReceiverTask::networkDisconnected, this, [this]() {
                 if (isTcpConnected) {
                     appendLog(">> [Warning] Relay Station closed the connection unexpectedly!");
-                    this->stopAll(); // 这会自动断开所有连接，并发出 connectionStatusChanged(false) 信号
+                    this->stopAll();
                 }
                 }, Qt::QueuedConnection);
 
-            // 安全在主线程启动发送线程
+            // Start the sender thread from the Qt owner thread.
             if (!m_senderThread) {
                 m_senderThread = new RelaySenderThread(this);
                 m_senderThread->start();
@@ -276,7 +145,7 @@ void RelayNetworkClient::disconnectFromRelay() {
 
     disconnectTwin();
 
-    // 🚀 安全让测速 Socket 关停，但保留线程以便下次秒连
+    // Stop ping sockets but keep the worker thread reusable for the next connection.
     if (m_pingTask) {
         QMetaObject::invokeMethod(m_pingTask, "stopSockets", Qt::BlockingQueuedConnection);
     }
@@ -294,7 +163,7 @@ void RelayNetworkClient::disconnectFromRelay() {
     }
 
     if (relaySocket != INVALID_SOCKET) {
-        sendToRelay(Config::ENABLE_PORT, DISABLE_CMD);
+        sendToRelay(ENABLE_PORT, DISABLE_CMD);
         Sleep(100);
     }
 
@@ -399,7 +268,7 @@ bool RelayNetworkClient::sendToRelay(int targetPort, const char* cmd) {
             ? (currentTime - startWaitTime)
             : (currentTime + (0xFFFFFFFF - startWaitTime));
 
-        if (totalWaitTime >= Config::MAX_RELAY_WAIT_TIME) {
+        if (totalWaitTime >= MAX_RELAY_WAIT_TIME) {
             appendLog(QString("[Feedback Timeout] Target Port=%1, Command=%2").arg(targetPort).arg(cmd));
             return false;
         }
@@ -475,7 +344,7 @@ bool RelayNetworkClient::readFeedbackAndCheck(SOCKET sock, const char* portName,
             ? (currentTime - startWaitTime)
             : (0xFFFFFFFF - startWaitTime + currentTime);
 
-        if (waitTime >= Config::FEEDBACK_TIMEOUT) {
+        if (waitTime >= FEEDBACK_TIMEOUT) {
             appendLog(QString("[Feedback Timeout] %1").arg(portName));
             return false;
         }
@@ -495,7 +364,7 @@ bool RelayNetworkClient::readFeedbackAndCheck(SOCKET sock, const char* portName,
 }
 
 bool RelayNetworkClient::clearRobotAlarm() {
-    if (!sendToRelay(Config::ENABLE_PORT, CLEAR_ERROR_CMD)) {
+    if (!sendToRelay(ENABLE_PORT, CLEAR_ERROR_CMD)) {
         appendLog("[Alarm] ClearError send failed");
         return false;
     }
@@ -527,7 +396,7 @@ void RelayNetworkClient::updateAlarmStatus() {
     }
 
     char buffer[512];
-    int len = sprintf_s(buffer, sizeof(buffer), "%d|%s", Config::ENABLE_PORT, cmd);
+    int len = sprintf_s(buffer, sizeof(buffer), "%d|%s", ENABLE_PORT, cmd);
     send(sock, buffer, len, 0);
 
     char feedbackBuf[1024];
@@ -556,7 +425,7 @@ bool RelayNetworkClient::getRobotCurrentPos() {
 
     const char* cmd = "GetPose()";
     char relayCmd[256];
-    sprintf_s(relayCmd, sizeof(relayCmd), "%d|%s", Config::ENABLE_PORT, cmd);
+    sprintf_s(relayCmd, sizeof(relayCmd), "%d|%s", ENABLE_PORT, cmd);
 
     SOCKET currentSocket;
     {
@@ -622,7 +491,7 @@ bool RelayNetworkClient::sendCpCommand(unsigned int smoothRatio) {
     char cpCmd[64];
     sprintf_s(cpCmd, sizeof(cpCmd), "CP(%d)", smoothRatio);
 
-    bool ok = sendToRelay(Config::ENABLE_PORT, cpCmd);
+    bool ok = sendToRelay(ENABLE_PORT, cpCmd);
     if (ok) {
         isCpSet = true;
         appendLog(QString("[Init] CP(%1) set successfully").arg(smoothRatio));
@@ -638,7 +507,7 @@ bool RelayNetworkClient::sendCoordinates(double x, double y, double z) {
         appendLog("[Motion] Robot in alarm, preparing to clear alarm");
         if (!clearRobotAlarm()) return false;
 
-        if (!sendToRelay(Config::ENABLE_PORT, ENABLE_CMD)) {
+        if (!sendToRelay(ENABLE_PORT, ENABLE_CMD)) {
             appendLog("[Motion] Re-enable failed");
             return false;
         }
@@ -673,14 +542,14 @@ bool RelayNetworkClient::sendCoordinates(double x, double y, double z) {
         REALTIME_MOVE_CMD,
         targetX, targetY, targetZ,
         targetRx, targetRy, targetRz,
-        Config::SpeedL);
+        SpeedL);
 
     if (cmdLen <= 0 || cmdLen >= static_cast<int>(sizeof(motionCmd))) {
         appendLog("[Motion] MovL command formatting failed");
         return false;
     }
 
-    bool sendSuccess = sendToRelay(Config::MOTION_PORT, motionCmd);
+    bool sendSuccess = sendToRelay(MOTION_PORT, motionCmd);
     if (!sendSuccess) {
         appendLog("[Motion] MovL send failed");
         return false;
@@ -702,7 +571,7 @@ void RelayNetworkClient::startRobotInitialization() {
         return;
     }
 
-    if (!sendToRelay(Config::ENABLE_PORT, ENABLE_CMD)) {
+    if (!sendToRelay(ENABLE_PORT, ENABLE_CMD)) {
         appendLog("[Init] Robot enable failed");
         emit initializationFinished(false);
         return;
@@ -711,7 +580,7 @@ void RelayNetworkClient::startRobotInitialization() {
         appendLog("[Init] Robot enabled successfully");
     }
 
-    if (!sendCpCommand(Config::CP_SMOOTH_RATIO)) {
+    if (!sendCpCommand(CP_SMOOTH_RATIO)) {
         appendLog("[Init] Failed to set CP");
         emit initializationFinished(false);
         return;
@@ -731,11 +600,11 @@ void RelayNetworkClient::sendMoveCommand(double dx, double dy, double dz) {
 
     QMutexLocker locker(&queueMutex);
 
-    if (sendQueue.size() >= Config::MAX_QUEUE_SIZE) {
+    if (sendQueue.size() >= MAX_QUEUE_SIZE) {
         sendQueue.dequeue();
     }
 
-    SendData data;
+    RelayMoveDelta data;
     data.deltaX = static_cast<float>(dx);
     data.deltaY = static_cast<float>(dy);
     data.deltaZ = static_cast<float>(dz);
@@ -756,13 +625,13 @@ void RelayNetworkClient::disconnectTwin() {
         m_twinHeartbeatTimer->stop();
     }
     if (!m_relayIp.isEmpty() && m_udpTwinSocket) {
-        m_udpTwinSocket->writeDatagram("TWIN_STOP", QHostAddress(m_relayIp), Config::STATUS_PORT);
+        m_udpTwinSocket->writeDatagram("TWIN_STOP", QHostAddress(m_relayIp), STATUS_PORT);
     }
 }
 
 void RelayNetworkClient::sendTwinHeartbeat() {
     if (m_twinEnabled && !m_relayIp.isEmpty() && m_udpTwinSocket) {
-        m_udpTwinSocket->writeDatagram("TWIN_START", QHostAddress(m_relayIp), Config::STATUS_PORT);
+        m_udpTwinSocket->writeDatagram("TWIN_START", QHostAddress(m_relayIp), STATUS_PORT);
     }
 }
 

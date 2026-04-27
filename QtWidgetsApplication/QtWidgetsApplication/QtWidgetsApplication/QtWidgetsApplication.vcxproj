@@ -102,8 +102,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="PingReceiverTask.cpp" />
+    <ClCompile Include="RelaySenderThread.cpp" />
     <ClCompile Include="VideoStreamReceiver.cpp" />
+    <QtMoc Include="PingReceiverTask.h" />
     <QtMoc Include="RelayNetworkClient.h" />
+    <QtMoc Include="RelaySenderThread.h" />
     <ClCompile Include="RelayNetworkClient.cpp">
       <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
       <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
@@ -137,6 +141,7 @@
     <QtMoc Include="VideoStreamReceiver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="RelayMoveDelta.h" />
     <ClInclude Include="VideoImageProvider.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

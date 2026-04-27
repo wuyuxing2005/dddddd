@@ -112,12 +112,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="PingWorker.cpp" />
     <ClCompile Include="test1.cpp" />
     <QtRcc Include="test1.qrc" />
     <QtUic Include="test1.ui" />
+    <QtMoc Include="PingWorker.h" />
     <QtMoc Include="test1.h" />
+    <ClCompile Include="VideoStreamThread.cpp" />
+    <QtMoc Include="VideoStreamThread.h" />
     <ClCompile Include="..\QCustomPlot_File\QCustomPlot\qcustomplot\qcustomplot.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DobotRealTimeData.h" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="..\QCustomPlot_File\QCustomPlot\qcustomplot\qcustomplot.h" />

@@ -49,6 +49,12 @@
     <ClCompile Include="RelayNetworkClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PingReceiverTask.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RelaySenderThread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="RobotTwinBackend.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -63,6 +69,12 @@
     <QtMoc Include="RelayNetworkClient.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="PingReceiverTask.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="RelaySenderThread.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
     <QtMoc Include="TouchDeviceManager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -74,6 +86,9 @@
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="RelayMoveDelta.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="VideoImageProvider.h">
       <Filter>Header Files</Filter>
     </ClInclude>

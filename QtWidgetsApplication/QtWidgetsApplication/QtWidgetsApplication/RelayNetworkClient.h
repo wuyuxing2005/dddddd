@@ -2,16 +2,14 @@
 
 #include <QObject>
 #include <QString>
-#include <QVector3D>
 #include <QMutex>
 #include <QQueue>
 #include <QThread>
+#include <QTimer>
+#include <QUdpSocket>
 #include <atomic>
 
-#include <QUdpSocket>
-#include <QTcpSocket>
-#include <QHostAddress>
-#include <QTimer> 
+#include "RelayMoveDelta.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
@@ -19,58 +17,16 @@
 #include <windows.h>
 #pragma comment(lib, "ws2_32.lib")
 
-struct SendData {
-    float deltaX;
-    float deltaY;
-    float deltaZ;
-};
+class PingReceiverTask;
+class RelaySenderThread;
 
-class RelayNetworkClient;
-
-class RelaySenderThread : public QThread {
-    Q_OBJECT
-public:
-    explicit RelaySenderThread(RelayNetworkClient* owner);
-    void stop();
-
-protected:
-    void run() override;
-
-private:
-    RelayNetworkClient* m_owner;
-    std::atomic<bool> m_running;
-};
-
-// =========================================================
-// 🚀 独立测速线程任务类：彻底免疫 UI 渲染卡顿！
-// =========================================================
-class PingReceiverTask : public QObject {
-    Q_OBJECT
-public:
-    explicit PingReceiverTask(QObject* parent = nullptr) : QObject(parent) {}
-    QString ip;
-    QTcpSocket* m_pingTcpSocket = nullptr;
-    QUdpSocket* m_pingUdpSocket = nullptr;
-    QTimer* m_pingUdpHeartbeatTimer = nullptr;
-
-signals:
-    // 🚀 新增这一行：用于向上级报告中转站跑路了
-    void networkDisconnected();
-
-public slots:
-    void setupSockets();
-    void stopSockets();
-};
-
-// =========================================================
-// 🌐 主控制客户端类
-// =========================================================
 class RelayNetworkClient : public QObject {
     Q_OBJECT
 
 public:
     explicit RelayNetworkClient(QObject* parent = nullptr);
     ~RelayNetworkClient();
+
     void setTwinEnabled(bool enabled);
     bool isTwinEnabled() const;
     void connectToRelay(const QString& ip, int port);
@@ -103,19 +59,17 @@ private slots:
 private:
     friend class RelaySenderThread;
 
-    struct Config {
-        static constexpr int ENABLE_PORT = 29999;
-        static constexpr int MOTION_PORT = 30003;
-        static constexpr int STATUS_PORT = 8889;
+    static constexpr int ENABLE_PORT = 29999;
+    static constexpr int MOTION_PORT = 30003;
+    static constexpr int STATUS_PORT = 8889;
 
-        static constexpr float SpeedL = 100.0f;
-        static constexpr float MIN_DELTA_THRESHOLD = 1.0f;
-        static constexpr unsigned int CP_SMOOTH_RATIO = 100;
-        static constexpr int FEEDBACK_TIMEOUT = 2000;
-        static constexpr int MAX_RELAY_WAIT_TIME = 5000;
-        static constexpr int MAX_QUEUE_SIZE = 5;
-        static constexpr int RobotMode_CHECK_INTERVAL = 300;
-    };
+    static constexpr float SpeedL = 100.0f;
+    static constexpr float MIN_DELTA_THRESHOLD = 1.0f;
+    static constexpr unsigned int CP_SMOOTH_RATIO = 100;
+    static constexpr int FEEDBACK_TIMEOUT = 2000;
+    static constexpr int MAX_RELAY_WAIT_TIME = 5000;
+    static constexpr int MAX_QUEUE_SIZE = 5;
+    static constexpr int RobotMode_CHECK_INTERVAL = 300;
 
     const char* ENABLE_CMD = "EnableRobot(0.5,0,0,0)";
     const char* DISABLE_CMD = "DisableRobot()";
@@ -144,14 +98,13 @@ private:
     QString m_relayIp;
     int m_relayPort = 8888;
 
-    QQueue<SendData> sendQueue;
+    QQueue<RelayMoveDelta> sendQueue;
     QMutex queueMutex;
     RelaySenderThread* m_senderThread = nullptr;
 
     QUdpSocket* m_udpTwinSocket = nullptr;
     QTimer* m_twinHeartbeatTimer = nullptr;
 
-    // 🚀 独立测速线程控制指针
     QThread* m_pingThread = nullptr;
     PingReceiverTask* m_pingTask = nullptr;
 

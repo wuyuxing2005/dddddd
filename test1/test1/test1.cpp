@@ -1,122 +1,17 @@
 #include "test1.h"
+#include "DobotRealTimeData.h"
+#include "PingWorker.h"
+#include "VideoStreamThread.h"
+
+#include <QAbstractButton>
+#include <QComboBox>
 #include <QDebug> 
 #include <QNetworkProxy>
+#include <QPlainTextEdit>
+#include <QThread>
 
 // =========================================================
-// 🚀 PingWorker 核心实现：彻底剥离 UI 干扰
-// =========================================================
-void PingWorker::setup() {
-    tcpServer = new QTcpServer(this);
-    tcpServer->listen(QHostAddress::Any, 8890);
-    connect(tcpServer, &QTcpServer::newConnection, this, &PingWorker::handleTcpNewConnection);
-
-    udpSocket = new QUdpSocket(this);
-    udpSocket->bind(QHostAddress::Any, 8890, QUdpSocket::ShareAddress);
-    connect(udpSocket, &QUdpSocket::readyRead, this, &PingWorker::handleUdpReadyRead);
-
-    emit logToUi(">> [Latency Thread] Ping Sockets initialized on Port 8890.");
-}
-
-void PingWorker::handleTcpNewConnection() {
-    if (tcpClient) tcpClient->deleteLater();
-    tcpClient = tcpServer->nextPendingConnection();
-    tcpClient->setSocketOption(QAbstractSocket::LowDelayOption, 1);
-    connect(tcpClient, &QTcpSocket::readyRead, this, &PingWorker::handleTcpReadyRead);
-    emit logToUi(">> [Latency Thread] TCP Probe joined Port 8890.");
-}
-
-void PingWorker::sendPing(int payloadSize, bool isUdp) {
-    if (payloadSize != lastPayloadSize) {
-        txBuffer.resize(payloadSize + 64);
-        memset(txBuffer.data(), 'X', payloadSize);
-        lastPayloadSize = payloadSize;
-    }
-
-    qint64 t1 = timer->nsecsElapsed();
-    char tail[64];
-    int tailLen = sprintf_s(tail, sizeof(tail), "PING|%lld|", t1);
-    memcpy(txBuffer.data() + payloadSize, tail, tailLen);
-
-    if (isUdp) {
-        if (!udpTargetIp.isNull()) {
-            udpSocket->writeDatagram(txBuffer.constData(), payloadSize + tailLen, udpTargetIp, udpTargetPort);
-        }
-    }
-    else {
-        if (tcpClient && tcpClient->isOpen()) {
-            tcpClient->write(txBuffer.constData(), payloadSize + tailLen);
-        }
-    }
-}
-
-void PingWorker::handleTcpReadyRead() {
-    qint64 t2 = timer->nsecsElapsed();
-    if (tcpClient) processData(tcpClient->readAll(), t2);
-}
-
-void PingWorker::handleUdpReadyRead() {
-    while (udpSocket && udpSocket->hasPendingDatagrams()) {
-        qint64 t2 = timer->nsecsElapsed();
-        QByteArray datagram;
-        datagram.resize(int(udpSocket->pendingDatagramSize()));
-        QHostAddress senderIp;
-        quint16 senderPort;
-        udpSocket->readDatagram(datagram.data(), datagram.size(), &senderIp, &senderPort);
-
-        if (senderIp.protocol() == QAbstractSocket::IPv6Protocol) {
-            senderIp = QHostAddress(senderIp.toIPv4Address());
-        }
-
-        QString cmd = QString::fromUtf8(datagram).trimmed();
-        if (cmd == "PING_HOLE_PUNCH") {
-            static QHostAddress lastPunchIp;
-            static quint16 lastPunchPort = 0;
-            if (lastPunchIp != senderIp || lastPunchPort != senderPort) {
-                emit logToUi(QString(">> [Latency Thread] UDP Probe punched: %1:%2").arg(senderIp.toString()).arg(senderPort));
-                lastPunchIp = senderIp;
-                lastPunchPort = senderPort;
-            }
-            udpTargetIp = senderIp;
-            udpTargetPort = senderPort;
-        }
-        else {
-            processData(datagram, t2);
-        }
-    }
-}
-
-void PingWorker::processData(const QByteArray& data, qint64 t_recv) {
-    int pongIdx = data.lastIndexOf("PONG|");
-    if (pongIdx != -1) {
-        QString pongPart = QString::fromUtf8(data.mid(pongIdx));
-        QStringList parts = pongPart.split('|');
-
-        if (parts.size() >= 3) {
-            qint64 t_sent = parts[1].toLongLong();
-            if (t_sent > 0) {
-                double rttMs = (t_recv - t_sent) / 1000000.0;
-
-                emit pongReceived();
-
-                if (currentPayloadIndex == 0) {
-                    emit resultReady(rttMs / 2.0);
-                }
-                else {
-                    emit resultReady(rttMs);
-                }
-            }
-        }
-    }
-}
-
-void PingWorker::stopAll() {
-    if (tcpServer) tcpServer->close();
-    if (udpSocket) udpSocket->close();
-    if (tcpClient && tcpClient->isOpen()) tcpClient->disconnectFromHost();
-}
-
-// =========================================================
-// 🚀 test1 主类实现 
+// test1 main window implementation
 // =========================================================
 test1::test1(QWidget* parent)
     : QMainWindow(parent)
@@ -210,28 +105,28 @@ test1::test1(QWidget* parent)
     ui.plot_network_latency->yAxis->setTickLabelFont(tickLabelFont);
 
     // ==========================================================
-    // 🚀 核心机制 1：解除强制互斥，实现点击暂停功能
+    // Allow clicking the active channel again to freeze the plot.
     // ==========================================================
     ui.chk_show_control->setAutoExclusive(false);
     ui.chk_show_digitaltwin->setAutoExclusive(false);
     ui.chk_show_video->setAutoExclusive(false);
 
-    // 🚀 核心机制 2：动态图例与【历史视野秒切】机制
+    // Switch plot visibility and restore the selected channel viewport.
     auto updatePlotVisibility = [this]() {
         bool ctrl = ui.chk_show_control->isChecked();
         bool twin = ui.chk_show_digitaltwin->isChecked();
         bool vid = ui.chk_show_video->isChecked();
 
-        // 冻结状态：全都没选中，保持画面和视野不变
+        // Frozen state: keep the current plot viewport.
         if (!ctrl && !twin && !vid) return;
 
-        // 设置线条可见性
+        // Update line visibility.
         ui.plot_relay_latency->graph(0)->setVisible(ctrl);
         ui.plot_relay_latency->graph(3)->setVisible(ctrl);
         ui.plot_relay_latency->graph(1)->setVisible(twin);
         ui.plot_relay_latency->graph(2)->setVisible(vid);
 
-        // 动态踢出/加入图例
+        // Rebuild the legend for the selected channel.
         if (ctrl) {
             ui.plot_relay_latency->graph(0)->addToLegend();
             ui.plot_relay_latency->graph(3)->addToLegend();
@@ -251,7 +146,7 @@ test1::test1(QWidget* parent)
             ui.plot_relay_latency->graph(3)->removeFromLegend();
         }
 
-        // 🚀【本次修复重点】：切频道时，瞬间把坐标轴推回该频道历史数据的视野！
+        // Restore the selected channel's historical viewport immediately.
         int refX = 0;
         double maxInWindow = 0.15;
         double sum = 0;
@@ -271,7 +166,7 @@ test1::test1(QWidget* parent)
             for (double v : m_latencyHistory[2]) { if (v * 2.0 > maxInWindow) maxInWindow = v * 2.0; sum += v; count++; }
         }
 
-        // 瞬间恢复文本框的平均值
+        // 鐬棿鎭㈠鏂囨湰妗嗙殑骞冲潎鍊?
         if (count > 0) {
             ui.avg_relay_latency->setText(QString::number(sum / count, 'f', 3));
         }
@@ -279,17 +174,17 @@ test1::test1(QWidget* parent)
             ui.avg_relay_latency->clear();
         }
 
-        // 瞬间恢复 Y 轴峰值
+        // 鐬棿鎭㈠ Y 杞村嘲鍊?
         ui.plot_relay_latency->yAxis->setRange(0, maxInWindow);
 
-        // 瞬间拉回 X 轴视野，不再需要等新包
+        // Restore the X-axis without waiting for a new packet.
         if (refX > 100) ui.plot_relay_latency->xAxis->setRange(refX - 100, refX);
         else ui.plot_relay_latency->xAxis->setRange(0, 100);
 
         ui.plot_relay_latency->replot();
         };
 
-    // 绑定点击事件
+    // 缁戝畾鐐瑰嚮浜嬩欢
     connect(ui.chk_show_control, &QAbstractButton::clicked, this, [=](bool checked) {
         if (checked) {
             ui.chk_show_digitaltwin->setChecked(false);
@@ -314,7 +209,7 @@ test1::test1(QWidget* parent)
         }
         });
 
-    // 默认开启控制流
+    // Show the control stream by default.
     ui.chk_show_control->setChecked(true);
 
     m_server = new QTcpServer(this);
@@ -399,7 +294,7 @@ test1::test1(QWidget* parent)
                         m_robot_motion->write(cmdBody);
                     }
 
-                    // 👉 通道 0：控制流
+                    // Channel 0: control stream.
                     double relayLatencyMs = processTimer.nsecsElapsed() / 1000000.0;
                     updateProcessLatencyUI(0, relayLatencyMs);
 
@@ -504,7 +399,7 @@ void test1::initRobotConnections(QString ip, int motionPort, int enablePort, int
 
         if (m_client && m_client->isOpen()) m_client->write(data);
 
-        // 👉 通道 3：机器人向上传递的控制反馈
+        // Channel 3: robot-to-touch feedback.
         double relayLatencyMs = processTimer.nsecsElapsed() / 1000000.0;
         updateProcessLatencyUI(3, relayLatencyMs);
         ui.txt_feedback_log->appendPlainText(">> Robot 30003 to Relay: " + data);
@@ -527,7 +422,7 @@ void test1::initRobotConnections(QString ip, int motionPort, int enablePort, int
 
         if (m_client && m_client->isOpen()) m_client->write(data);
 
-        // 👉 通道 3：机器人向上传递的控制反馈
+        // Channel 3: robot-to-touch feedback.
         double relayLatencyMs = processTimer.nsecsElapsed() / 1000000.0;
         updateProcessLatencyUI(3, relayLatencyMs);
         ui.txt_feedback_log->appendPlainText(">> Robot 29999 to Relay: " + data);
@@ -579,7 +474,7 @@ void test1::on_btn_stop_clicked() {
     ui.LED_Touch->setStyleSheet("QLabel { background-color: #A0A0A0; border-radius: 8px; border: 1px solid #888888; }");
     ui.LED_Robot->setStyleSheet("QLabel { background-color: #A0A0A0; border-radius: 8px; border: 1px solid #888888; }");
 
-    // 🚀 【新增】：全局停止时，灯也要变灰
+    // Reset camera status when the relay stops.
     ui.LED_Camera->setStyleSheet("QLabel { background-color: #A0A0A0; border-radius: 8px; border: 1px solid #888888; }");
 
     ui.btn_start->setEnabled(true);
@@ -654,7 +549,7 @@ void test1::onRobotStatusReadyRead() {
             m_udpTwinSocket->writeDatagram(twinStr.toUtf8(), m_twinTargetIp, m_twinTargetPort);
         }
 
-        // 👉 通道 1：Digital Twin 时延统计
+        // Channel 1: digital twin latency.
         double relayLatencyMs = processTimer.nsecsElapsed() / 1000000.0;
         updateProcessLatencyUI(1, relayLatencyMs);
     }
@@ -691,11 +586,11 @@ void test1::onUdpCommandReadyRead() {
                 m_videoThread = new VideoStreamThread(this);
                 connect(m_videoThread, &VideoStreamThread::frameEncoded, this, [this](const QByteArray& data, const QHostAddress& ip, int port, double latencyMs) {
                     if (m_udpCommandSocket) m_udpCommandSocket->writeDatagram(data, ip, port);
-                    updateProcessLatencyUI(2, latencyMs); // 👉 通道 2：视频时延
+                    updateProcessLatencyUI(2, latencyMs);
                     });
 
 
-                // 🚀 【新增】：接收摄像头状态信号，控制 LED 灯！
+                // Reflect camera hardware status in the relay UI.
                 connect(m_videoThread, &VideoStreamThread::cameraStatusChanged, this, [this](bool isOpen) {
                     if (isOpen) {
                         ui.LED_Camera->setStyleSheet("QLabel { background-color: #00FF00; border-radius: 8px; border: 1px solid #00AA00; }");
@@ -721,7 +616,7 @@ void test1::onUdpCommandReadyRead() {
                 ui.relay_video_status->setStyleSheet("color: #A0A0A0;");
             }
 
-            // 🚀 【新增】：关闭视频时灯变灰
+            // Reset the camera LED when video stops.
             ui.LED_Camera->setStyleSheet("QLabel { background-color: #A0A0A0; border-radius: 8px; border: 1px solid #888888; }");
         }
     }
@@ -779,7 +674,7 @@ void test1::initProcessLatencyPlot() {
     penFeedback.setWidth(2);
     ui.plot_relay_latency->graph(3)->setPen(penFeedback);
 
-    ui.plot_relay_latency->legend->setVisible(false); // 初始隐藏，由自动更新逻辑接管
+    ui.plot_relay_latency->legend->setVisible(false);
     QFont legendFont("Segoe UI", 10);
     legendFont.setWeight(QFont::Medium);
     ui.plot_relay_latency->legend->setFont(legendFont);
@@ -791,14 +686,14 @@ void test1::initProcessLatencyPlot() {
     ui.plot_relay_latency->legend->setMargins(QMargins(8, 6, 8, 6));
     ui.plot_relay_latency->axisRect()->insetLayout()->setInsetAlignment(0, Qt::AlignTop | Qt::AlignRight);
 
-    // 默认 Control 状态的图例
+    // Initial legend state for the control channel.
     ui.plot_relay_latency->graph(1)->removeFromLegend();
     ui.plot_relay_latency->graph(2)->removeFromLegend();
     ui.plot_relay_latency->replot();
 }
 
 void test1::updateProcessLatencyUI(int channelIndex, double latencyMs) {
-    // 🚀 核心机制 3：未选中时强制返回，既丢弃历史数据防后台累积，又实现了暂停冻结效果
+    // Ignore hidden channels to prevent background history accumulation.
     if (channelIndex == 0 || channelIndex == 3) {
         if (!ui.chk_show_control->isChecked()) return;
     }

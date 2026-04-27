@@ -43,10 +43,27 @@
     <ClCompile Include="test1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PingWorker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoStreamThread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="PingWorker.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="VideoStreamThread.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
     <QtMoc Include="..\QCustomPlot_File\QCustomPlot\qcustomplot\qcustomplot.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DobotRealTimeData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
